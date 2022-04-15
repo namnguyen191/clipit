@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   EventEmitter,
   Input,
   OnDestroy,
@@ -22,10 +23,11 @@ export class ModalComponent implements OnInit, OnDestroy {
 
   modal$!: Observable<IModal>;
 
-  constructor(public modalService: ModalService) {}
+  constructor(public modalService: ModalService, public el: ElementRef) {}
 
   ngOnDestroy(): void {
     this.modalService.unregisteredModal(this.id);
+    document.body.removeChild(this.el.nativeElement);
   }
 
   ngOnInit(): void {
@@ -34,6 +36,8 @@ export class ModalComponent implements OnInit, OnDestroy {
     }
 
     this.modal$ = this.modalService.getModalSubscription(this.id);
+
+    document.body.appendChild(this.el.nativeElement);
   }
 
   onCloseModal() {
