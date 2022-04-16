@@ -1,0 +1,83 @@
+<!-- Registration Form -->
+<form [formGroup]="registerForm">
+  <!-- Name -->
+  <div class="mb-3">
+    <label class="inline-block mb-2">Name</label>
+    <input
+      [formControlName]="registerFormFields.name"
+      type="text"
+      class="block w-full py-1.5 px-3 text-gray-200 border border-gray-400 transition duration-500 focus:outline-none rounded bg-transparent focus:border-indigo-400"
+      placeholder="Enter Name"
+      minlength="3"
+    />
+    <p
+      *ngIf="registerForm.get(registerFormFields.name)?.errors?.['required']"
+      class="text-red-400"
+    >
+      Field is required
+    </p>
+    <p
+      *ngIf="registerForm.get(registerFormFields.name)?.errors?.['minlength']"
+      class="text-red-400"
+    >
+      Name must be at least
+      {{ registerForm.get(registerFormFields.name)?.errors?.['minlenght']?.requiredLength }}
+      characters long
+    </p>
+  </div>
+  <!-- Email -->
+  <div class="mb-3">
+    <label class="inline-block mb-2">Email</label>
+    <input
+      [formControlName]="registerFormFields.email"
+      type="email"
+      class="block w-full py-1.5 px-3 text-gray-200 border border-gray-400 transition duration-500 focus:outline-none rounded bg-transparent focus:border-indigo-400"
+      placeholder="Enter Email"
+    />
+  </div>
+  <!-- Age -->
+  <div class="mb-3">
+    <label class="inline-block mb-2">Age</label>
+    <input
+      [formControlName]="registerFormFields.age"
+      type="number"
+      class="block w-full py-1.5 px-3 text-gray-200 border border-gray-400 transition duration-500 focus:outline-none rounded bg-transparent focus:border-indigo-400"
+    />
+  </div>
+  <!-- Password -->
+  <div class="mb-3">
+    <label class="inline-block mb-2">Password</label>
+    <input
+      [formControlName]="registerFormFields.password"
+      type="password"
+      class="block w-full py-1.5 px-3 text-gray-200 border border-gray-400 transition duration-500 focus:outline-none rounded bg-transparent focus:border-indigo-400"
+      placeholder="Password"
+    />
+  </div>
+  <!-- Confirm Password -->
+  <div class="mb-3">
+    <label class="inline-block mb-2">Confirm Password</label>
+    <input
+      [formControlName]="registerFormFields.confirmedPassword"
+      type="password"
+      class="block w-full py-1.5 px-3 text-gray-200 border border-gray-400 transition duration-500 focus:outline-none rounded bg-transparent focus:border-indigo-400"
+      placeholder="Confirm Password"
+    />
+  </div>
+  <!-- Phone Number -->
+  <div class="mb-3">
+    <label class="inline-block mb-2">Phone Number</label>
+    <input
+      [formControlName]="registerFormFields.phoneNumber"
+      type="text"
+      class="block w-full py-1.5 px-3 text-gray-200 border border-gray-400 transition duration-500 focus:outline-none rounded bg-transparent focus:border-indigo-400"
+      placeholder="Enter Phone Number"
+    />
+  </div>
+  <button
+    type="submit"
+    class="block w-full bg-indigo-400 text-white py-1.5 px-3 rounded transition hover:bg-indigo-500"
+  >
+    Submit
+  </button>
+</form>
