@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { Observable } from 'rxjs';
 import { IModal, ModalService } from 'src/app/services/modal.service';
+import { Required } from '../decorators/required.decorator';
 
 @Component({
   selector: 'app-modal',
@@ -19,7 +20,7 @@ import { IModal, ModalService } from 'src/app/services/modal.service';
 })
 export class ModalComponent implements OnInit, OnDestroy {
   @Output() modalClose: EventEmitter<void> = new EventEmitter();
-  @Input() id!: string;
+  @Input() @Required id!: string;
 
   modal$!: Observable<IModal>;
 
@@ -31,10 +32,6 @@ export class ModalComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    if (!this.id) {
-      throw Error('Please provide this modal with an id');
-    }
-
     this.modal$ = this.modalService.getModalSubscription(this.id);
 
     document.body.appendChild(this.el.nativeElement);
