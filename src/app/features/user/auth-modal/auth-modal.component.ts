@@ -1,11 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ModalService } from 'src/app/services/modal.service';
 import { NavigationService } from 'src/app/services/navigation.service';
 
 @Component({
   selector: 'app-auth-modal',
   templateUrl: './auth-modal.component.html',
-  styleUrls: ['./auth-modal.component.scss']
+  styleUrls: ['./auth-modal.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AuthModalComponent implements OnInit {
   readonly MODAL_ID: string = 'registrationModal';
