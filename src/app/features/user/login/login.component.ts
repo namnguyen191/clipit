@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 @Component({
   selector: 'app-login',
@@ -6,8 +6,14 @@ import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
   styleUrls: ['./login.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent {
+  credentials = {
+    email: '',
+    password: ''
+  };
   constructor() {}
 
-  ngOnInit(): void {}
+  login() {
+    console.log('Nam data is: ', this.credentials);
+  }
 }
