@@ -1,5 +1,10 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { FirebaseError } from '@angular/fire/app';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { AuthService } from 'src/app/services/auth.service';
+import { NavigationService } from 'src/app/services/navigation.service';
+import { IAlert } from 'src/app/shared/alert/alert.component';
 
 @Component({
   selector: 'app-register',
@@ -42,21 +47,57 @@ export class RegisterComponent {
     phoneNumber: this.phoneNumber
   });
 
-  alert = {
-    show: false,
-    color: 'blue',
-    msg: 'Please wait while your account is being created!'
-  };
+  alert$: Subject<IAlert> = new Subject<IAlert>();
+  processing$: Subject<boolean> = new Subject<boolean>();
 
-  constructor() {
-    this.alert = {
+  constructor(
+    private authService: AuthService,
+    private navService: NavigationService
+  ) {}
+
+  async onFormSubmit() {
+    this.processing$.next(true);
+    this.alert$.next({
       show: true,
       msg: 'Please wait while your account is being created!',
       color: 'blue'
-    };
-  }
+    });
 
-  onFormSubmit() {}
+    const { email, password }: { email: string; password: string } =
+      this.registerForm.value;
+    try {
+      await this.authService.createUser(this.registerForm.value);
+    } catch (e) {
+      if (e instanceof FirebaseError) {
+        this.alert$.next({
+          show: true,
+          msg: e.message,
+          color: 'red'
+        });
+      } else {
+        console.log('Nam data is: ', e);
+        this.alert$.next({
+          show: true,
+          msg: 'Something went wrong. Please try again later.',
+          color: 'red'
+        });
+      }
+      this.processing$.next(false);
+
+      return;
+    }
+
+    this.processing$.next(false);
+    this.alert$.next({
+      show: true,
+      msg: 'Success! Your account has been created!',
+      color: 'green'
+    });
+
+    setTimeout(() => {
+      this.navService.back();
+    }, 1000);
+  }
 
   // private _initRegisterForm() {
   //   this.registerForm.addControl(

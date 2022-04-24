@@ -1,5 +1,11 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
+export interface IAlert {
+  show: boolean;
+  msg: string;
+  color: 'red' | 'green' | 'blue';
+}
+
 @Component({
   selector: 'app-alert',
   templateUrl: './alert.component.html',

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-nav',
@@ -7,5 +8,11 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class NavComponent {
-  constructor() {}
+  constructor(public authService: AuthService) {}
+
+  async logout(e: Event) {
+    e.preventDefault();
+
+    await this.authService.logout();
+  }
 }
