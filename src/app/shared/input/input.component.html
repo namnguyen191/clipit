@@ -32,6 +32,12 @@
   <p *ngIf="control.errors?.['pattern']" class="text-red-400">
     Value does not match pattern {{ control.errors?.['pattern']?.pattern }}
   </p>
+  <p *ngIf="control.errors?.['noMatch']" class="text-red-400">
+    Password does not match
+  </p>
+  <p *ngIf="control.errors?.['emailTaken']" class="text-red-400">
+    This email has been taken
+  </p>
 </ng-container>
 
 <ng-template #defaultErrorMessage> </ng-template>
