@@ -4,20 +4,34 @@ import {
   AngularFirestore,
   AngularFirestoreCollection
 } from '@angular/fire/compat/firestore';
-import { map, Observable } from 'rxjs';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { filter, map, Observable, of, switchMap } from 'rxjs';
 import { IRegisterUserData, IUserData } from '../models/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private usersCollection!: AngularFirestoreCollection<IUserData>;
   isAuthenticated$: Observable<boolean>;
+  redirectOnLoggedOutUrl: string | null = null;
 
   constructor(
     private angularFireAuth: AngularFireAuth,
-    private angularFireStore: AngularFirestore
+    private angularFireStore: AngularFirestore,
+    private activatedRoute: ActivatedRoute,
+    private router: Router
   ) {
     this.usersCollection = this.angularFireStore.collection<IUserData>('users');
     this.isAuthenticated$ = this.angularFireAuth.user.pipe(map((usr) => !!usr));
+
+    this.router.events
+      .pipe(
+        filter((e) => e instanceof NavigationEnd),
+        map(() => this.activatedRoute.firstChild),
+        switchMap((route) => route?.data ?? of({}))
+      )
+      .subscribe((routeData) => {
+        this.redirectOnLoggedOutUrl = routeData['redirectOnLoggedOutUrl'];
+      });
   }
 
   async createUser(userData: IRegisterUserData): Promise<void | Error> {
@@ -54,5 +68,9 @@ export class AuthService {
 
   async logout(): Promise<void> {
     await this.angularFireAuth.signOut();
+
+    if (this.redirectOnLoggedOutUrl) {
+      this.router.navigateByUrl(this.redirectOnLoggedOutUrl);
+    }
   }
 }
