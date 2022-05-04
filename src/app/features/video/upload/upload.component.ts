@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { AngularFireStorage } from '@angular/fire/compat/storage';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { v4 as uuid } from 'uuid';
 
 @Component({
   selector: 'app-upload',
@@ -17,7 +19,7 @@ export class UploadComponent {
     title: this.title
   });
 
-  constructor() {}
+  constructor(private angularFireStorage: AngularFireStorage) {}
 
   onFileDrop(e: DragEvent): void {
     this.isDragOver = false;
@@ -34,6 +36,11 @@ export class UploadComponent {
   }
 
   uploadFile(): void {
-    console.log('Nam data is: file uploaded');
+    if (!this.file) return;
+
+    const clipFileName = uuid();
+    const clipPath = `clips/${clipFileName}.mp4`;
+
+    this.angularFireStorage.upload(clipPath, this.file );
   }
 }
