@@ -22,6 +22,15 @@
 
     <!-- Video Editor -->
     <ng-template #uploadFormTpl>
+      <ng-container *ngIf="alert$ | async; let alert">
+        <app-alert *ngIf="alert.show" [color]="alert.color">
+          <p>{{ alert.msg }}</p>
+          <p *ngIf="uploadPercentage$ | async; let uploadPercentage">
+            {{ uploadPercentage | percent }}
+          </p>
+        </app-alert>
+      </ng-container>
+
       <!-- Form -->
       <form [formGroup]="uploadForm" (ngSubmit)="uploadFile()">
         <!-- Screenshots -->
@@ -47,7 +56,12 @@
         <div class="mt-4 text-right">
           <button
             type="submit"
-            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none"
+            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm rounded-md text-white bg-indigo-600 focus:outline-none"
+            [disabled]="processingRequest$ | async"
+            [ngClass]="{
+              'opacity-50': processingRequest$ | async,
+              'hover:bg-indigo-700': (processingRequest$ | async) === false
+            }"
           >
             Publish
           </button>
