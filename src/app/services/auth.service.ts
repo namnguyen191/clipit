@@ -13,6 +13,9 @@ export class AuthService {
   private usersCollection!: AngularFirestoreCollection<IUserData>;
   isAuthenticated$: Observable<boolean>;
   redirectOnLoggedOutUrl: string | null = null;
+  // private _currentUserSubject: BehaviorSubject<IUserData | null> =
+  //   new BehaviorSubject<IUserData | null>(null);
+  user$: Observable<IUserData | null>;
 
   constructor(
     private angularFireAuth: AngularFireAuth,
@@ -22,6 +25,19 @@ export class AuthService {
   ) {
     this.usersCollection = this.angularFireStore.collection<IUserData>('users');
     this.isAuthenticated$ = this.angularFireAuth.user.pipe(map((usr) => !!usr));
+    this.user$ = this.angularFireAuth.user.pipe(
+      map((firebaseUser) => {
+        if (!firebaseUser) return null;
+
+        return {
+          name: firebaseUser.displayName ?? 'unknown name',
+          email: firebaseUser.email ?? 'unknow email',
+          age: 10,
+          phoneNumber: firebaseUser.phoneNumber ?? 'unknown phone',
+          uuid: firebaseUser.uid
+        };
+      })
+    );
 
     this.router.events
       .pipe(

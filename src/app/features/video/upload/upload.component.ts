@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { AngularFireStorage } from '@angular/fire/compat/storage';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { finalize, last, map, Observable, Subject } from 'rxjs';
+import { finalize, last, map, Observable, Subject, switchMap } from 'rxjs';
+import { IUserData } from 'src/app/models/user.model';
+import { AuthService } from 'src/app/services/auth.service';
 import { IAlert } from 'src/app/shared/alert/alert.component';
 import { v4 as uuid } from 'uuid';
 
@@ -16,6 +18,7 @@ export class UploadComponent {
 
   isDragOver: boolean = false;
   file: File | null = null;
+  user: IUserData | null = null;
   // alert
   alert$: Subject<IAlert> = new Subject<IAlert>();
   // form
@@ -27,7 +30,12 @@ export class UploadComponent {
   processingRequest$: Subject<boolean> = new Subject<boolean>();
   uploadPercentage$: Observable<number> | null = null;
 
-  constructor(private angularFireStorage: AngularFireStorage) {}
+  constructor(
+    private angularFireStorage: AngularFireStorage,
+    private authService: AuthService
+  ) {
+    this.authService.user$.subscribe((usr) => (this.user = usr));
+  }
 
   onFileDrop(e: DragEvent): void {
     this.isDragOver = false;
@@ -57,6 +65,7 @@ export class UploadComponent {
     const clipPath = `clips/${clipFileName}.mp4`;
 
     const uploadTask = this.angularFireStorage.upload(clipPath, this.file);
+    const clipRef = this.angularFireStorage.ref(clipPath);
 
     this.uploadPercentage$ = uploadTask.percentageChanges().pipe(
       map((percent) => (percent ? percent / 100 : 0)),
@@ -65,9 +74,20 @@ export class UploadComponent {
 
     uploadTask
       .snapshotChanges()
-      .pipe(last())
+      .pipe(
+        last(),
+        switchMap(() => clipRef.getDownloadURL())
+      )
       .subscribe({
-        next: (snapShot) => {
+        next: (downloadUrl) => {
+          const clip = {
+            uid: this.user?.uuid ?? 'unknow',
+            displayName: this.user?.name,
+            title: this.title.value,
+            fileName: `${clipFileName}.mp4`,
+            url: downloadUrl
+          };
+
           this.alert$.next({
             color: 'green',
             msg: 'Success! Your clip is now ready to be shared with the world.',
