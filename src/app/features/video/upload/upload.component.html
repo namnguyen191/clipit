@@ -2,23 +2,27 @@
   <div class="rounded relative flex flex-col">
     <div class="font-bold mb-6">Upload Video</div>
 
-    <!-- Upload Dropbox -->
-    <div
-      *ngIf="!formEnabled; else uploadFormTpl"
-      appEventBlocker
-      (dragend)="isDragOver = false"
-      (dragover)="isDragOver = true"
-      (dragenter)="isDragOver = true"
-      (dragleave)="isDragOver = false"
-      (mouseleave)="isDragOver = false"
-      (drop)="onFileDrop($event)"
-      [ngClass]="{
-        'bg-indigo-400 border-indigo-400 border-solid': isDragOver
-      }"
-      class="w-full px-10 py-40 rounded text-center cursor-pointer border border-dashed border-gray-400 transition duration-500 hover:text-white hover:bg-indigo-400 hover:border-indigo-400 hover:border-solid text-xl"
-    >
-      <h5>Drop your file here (mp4 only!)</h5>
-    </div>
+    <!-- File upload -->
+    <ng-container *ngIf="!formEnabled; else uploadFormTpl">
+      <!-- Upload Dropbox -->
+      <div
+        appEventBlocker
+        (dragend)="isDragOver = false"
+        (dragover)="isDragOver = true"
+        (dragenter)="isDragOver = true"
+        (dragleave)="isDragOver = false"
+        (mouseleave)="isDragOver = false"
+        (drop)="onFileDrop($event)"
+        [ngClass]="{
+          'bg-indigo-400 border-indigo-400 border-solid': isDragOver
+        }"
+        class="w-full px-10 py-40 rounded text-center cursor-pointer border border-dashed border-gray-400 transition duration-500 hover:text-white hover:bg-indigo-400 hover:border-indigo-400 hover:border-solid text-xl"
+      >
+        <h5>Drop your file here (mp4 only!)</h5>
+      </div>
+      <!-- Upload input -->
+      <input type="file" class="mt-4" (change)="onFileSelect($event)" />
+    </ng-container>
 
     <!-- Video Editor -->
     <ng-template #uploadFormTpl>
@@ -57,10 +61,10 @@
           <button
             type="submit"
             class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm rounded-md text-white bg-indigo-600 focus:outline-none"
-            [disabled]="processingRequest$ | async"
+            [disabled]="isProcessingRequest$ | async"
             [ngClass]="{
-              'opacity-50': processingRequest$ | async,
-              'hover:bg-indigo-700': (processingRequest$ | async) === false
+              'opacity-50': isProcessingRequest$ | async,
+              'hover:bg-indigo-700': (isProcessingRequest$ | async) === false
             }"
           >
             Publish
