@@ -4,6 +4,8 @@ import {
   AngularFireUploadTask
 } from '@angular/fire/compat/storage';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import firebase from 'firebase/compat/app';
 import { finalize, last, map, Observable, Subject, switchMap } from 'rxjs';
 import { IClip } from 'src/app/models/clip.model';
 import { IUserData } from 'src/app/models/user.model';
@@ -40,7 +42,8 @@ export class UploadComponent implements OnDestroy {
   constructor(
     private angularFireStorage: AngularFireStorage,
     private authService: AuthService,
-    private clipService: ClipService
+    private clipService: ClipService,
+    private router: Router
   ) {
     this.authService.user$.subscribe((usr) => (this.user = usr));
   }
@@ -108,16 +111,20 @@ export class UploadComponent implements OnDestroy {
         switchMap(() => clipRef.getDownloadURL())
       )
       .subscribe({
-        next: (downloadUrl) => {
+        next: async (downloadUrl) => {
           const clip: IClip = {
             uid: this.user?.uuid ?? 'unknow',
             displayName: this.user?.name ?? 'unknow user displayName',
             title: this.title.value,
             fileName: `${clipFileName}.mp4`,
-            url: downloadUrl
+            url: downloadUrl,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
           };
 
-          this.clipService.createClip(clip);
+          const clipDocumentRef = await this.clipService.createClip(clip);
+          setTimeout(() => {
+            this.router.navigate(['clips', clipDocumentRef.id]);
+          }, 1000);
 
           this.alert$.next({
             color: 'green',
