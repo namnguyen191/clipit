@@ -30,6 +30,10 @@ export class ClipService {
     return this._clipsCollection.add(data);
   }
 
+  updateClip(updateClip: Partial<IClip>): Promise<void> {
+    return this._clipsCollection.doc(updateClip.docID).update(updateClip);
+  }
+
   getUserClips(): Observable<QueryDocumentSnapshot<IClip>[] | null> {
     return this.angularFireAuth.user.pipe(
       switchMap((usr) => {

@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { map, Observable } from 'rxjs';
+import { BehaviorSubject, map, Subject } from 'rxjs';
 import { IClip } from 'src/app/models/clip.model';
 import { ClipService } from 'src/app/services/clip.service';
+import { ModalService } from 'src/app/services/modal.service';
 
 type SortOder = 'desc' | 'asc';
 
@@ -13,23 +14,29 @@ type SortOder = 'desc' | 'asc';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ManageComponent implements OnInit {
+  readonly EDIT_MODAL_ID = 'editModal';
+
   videosSortOrder: SortOder = 'asc';
-  clips$: Observable<IClip[] | null>;
+  clips$: BehaviorSubject<IClip[]> = new BehaviorSubject<IClip[]>([]);
+  activeClip$: Subject<IClip | null> = new Subject<IClip | null>();
 
   constructor(
     private router: Router,
     private activatedRouter: ActivatedRoute,
-    private clipService: ClipService
+    private clipService: ClipService,
+    private modalService: ModalService
   ) {
-    this.clips$ = clipService
+    this.clipService
       .getUserClips()
       .pipe(
         map(
           (clipDocs) =>
             clipDocs?.map((doc) => ({ ...doc.data(), docID: doc.id })) ?? null
         )
-      );
-    this.clips$.subscribe((clips) => console.log('Nam data is: ', clips));
+      )
+      .subscribe((clips) => this.clips$.next(clips ?? []));
+
+    modalService.registerModal(this.EDIT_MODAL_ID);
   }
 
   ngOnInit(): void {
@@ -49,5 +56,21 @@ export class ManageComponent implements OnInit {
         sort: value
       }
     });
+  }
+
+  onEditLinkClick(event: Event, clip: IClip) {
+    event.preventDefault();
+
+    this.activeClip$.next({ ...clip });
+    this.modalService.showModal(this.EDIT_MODAL_ID);
+  }
+
+  onClipUpdate(updatedClip: Partial<IClip>) {
+    const oldClips = this.clips$.getValue();
+    const updatedIndex = oldClips.findIndex(
+      (oldClip) => oldClip.docID === updatedClip.docID
+    );
+    oldClips[updatedIndex] = { ...oldClips[updatedIndex], ...updatedClip };
+    this.clips$.next(oldClips);
   }
 }

@@ -27,6 +27,7 @@ export class ModalComponent implements OnInit, OnDestroy {
   constructor(public modalService: ModalService, public el: ElementRef) {}
 
   ngOnDestroy(): void {
+    console.log('Nam data is: modal destroyed');
     this.modalService.unregisteredModal(this.id);
     document.body.removeChild(this.el.nativeElement);
   }
