@@ -33,6 +33,7 @@ export class ModalComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.modalService.registerModal(this.id);
     this.modal$ = this.modalService.getModalSubscription(this.id);
 
     document.body.appendChild(this.el.nativeElement);

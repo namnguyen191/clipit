@@ -35,8 +35,6 @@ export class ManageComponent implements OnInit {
         )
       )
       .subscribe((clips) => this.clips$.next(clips ?? []));
-
-    modalService.registerModal(this.EDIT_MODAL_ID);
   }
 
   ngOnInit(): void {
@@ -63,6 +61,20 @@ export class ManageComponent implements OnInit {
 
     this.activeClip$.next({ ...clip });
     this.modalService.showModal(this.EDIT_MODAL_ID);
+  }
+
+  // TODO: add confirmation modal before delete and error handling
+  onDeleteLinkClick(event: Event, clip: IClip) {
+    event.preventDefault();
+
+    this.clipService.deleteClip(clip).subscribe({
+      next: () => {
+        const newClips = this.clips$
+          .getValue()
+          .filter((oldClip) => oldClip.docID !== clip.docID);
+        this.clips$.next(newClips);
+      }
+    });
   }
 
   onClipUpdate(updatedClip: Partial<IClip>) {

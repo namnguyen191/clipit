@@ -6,7 +6,13 @@ import {
   DocumentReference,
   QueryDocumentSnapshot
 } from '@angular/fire/compat/firestore';
+import {
+  AngularFireStorage,
+  AngularFireStorageReference,
+  AngularFireUploadTask
+} from '@angular/fire/compat/storage';
 import { map, Observable, of, switchMap } from 'rxjs';
+import { v4 as uuid } from 'uuid';
 import { IClip } from '../models/clip.model';
 
 @Injectable({
@@ -19,7 +25,8 @@ export class ClipService {
 
   constructor(
     private angularFirestore: AngularFirestore,
-    private angularFireAuth: AngularFireAuth
+    private angularFireAuth: AngularFireAuth,
+    private angularFireStorage: AngularFireStorage
   ) {
     this._clipsCollection = this.angularFirestore.collection(
       this.CLIPS_COLLECTION_ID
@@ -28,6 +35,16 @@ export class ClipService {
 
   createClip(data: IClip): Promise<DocumentReference<IClip>> {
     return this._clipsCollection.add(data);
+  }
+
+  uploadClip(file: File): [AngularFireUploadTask, AngularFireStorageReference] {
+    const clipFileName = uuid();
+    const clipPath = `clips/${clipFileName}.mp4`;
+
+    return [
+      this.angularFireStorage.upload(clipPath, file),
+      this.angularFireStorage.ref(clipPath)
+    ];
   }
 
   updateClip(updateClip: Partial<IClip>): Promise<void> {
@@ -46,5 +63,13 @@ export class ClipService {
       }),
       map((snapshot) => snapshot?.docs ?? null)
     );
+  }
+
+  deleteClip(clip: IClip): Observable<void> {
+    const clipRef = this.angularFireStorage.ref(`clips/${clip.fileName}`);
+
+    return clipRef
+      .delete()
+      .pipe(switchMap(() => this._clipsCollection.doc(clip.docID).delete()));
   }
 }

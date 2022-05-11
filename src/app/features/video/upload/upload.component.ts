@@ -1,18 +1,22 @@
 import { ChangeDetectionStrategy, Component, OnDestroy } from '@angular/core';
-import {
-  AngularFireStorage,
-  AngularFireUploadTask
-} from '@angular/fire/compat/storage';
+import { AngularFireUploadTask } from '@angular/fire/compat/storage';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import firebase from 'firebase/compat/app';
-import { finalize, last, map, Observable, Subject, switchMap } from 'rxjs';
+import {
+  combineLatest,
+  finalize,
+  last,
+  map,
+  Observable,
+  Subject,
+  switchMap
+} from 'rxjs';
 import { IClip } from 'src/app/models/clip.model';
 import { IUserData } from 'src/app/models/user.model';
 import { AuthService } from 'src/app/services/auth.service';
 import { ClipService } from 'src/app/services/clip.service';
 import { IAlert } from 'src/app/shared/alert/alert.component';
-import { v4 as uuid } from 'uuid';
 
 @Component({
   selector: 'app-upload',
@@ -40,7 +44,6 @@ export class UploadComponent implements OnDestroy {
   uploadTask: AngularFireUploadTask | null = null;
 
   constructor(
-    private angularFireStorage: AngularFireStorage,
     private authService: AuthService,
     private clipService: ClipService,
     private router: Router
@@ -93,11 +96,8 @@ export class UploadComponent implements OnDestroy {
     });
     this.isProcessingRequest$.next(true);
 
-    const clipFileName = uuid();
-    const clipPath = `clips/${clipFileName}.mp4`;
-
-    this.uploadTask = this.angularFireStorage.upload(clipPath, this.file);
-    const clipRef = this.angularFireStorage.ref(clipPath);
+    const [task, fileRef] = this.clipService.uploadClip(this.file);
+    this.uploadTask = task;
 
     this.uploadPercentage$ = this.uploadTask.percentageChanges().pipe(
       map((percent) => (percent ? percent / 100 : 0)),
@@ -108,15 +108,17 @@ export class UploadComponent implements OnDestroy {
       .snapshotChanges()
       .pipe(
         last(),
-        switchMap(() => clipRef.getDownloadURL())
+        switchMap(() =>
+          combineLatest([fileRef.getMetadata(), fileRef.getDownloadURL()])
+        )
       )
       .subscribe({
-        next: async (downloadUrl) => {
+        next: async ([fileMetaData, downloadUrl]) => {
           const clip: IClip = {
             uid: this.user?.uuid ?? 'unknow',
             displayName: this.user?.name ?? 'unknow user displayName',
             title: this.title.value,
-            fileName: `${clipFileName}.mp4`,
+            fileName: fileMetaData.name,
             url: downloadUrl,
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
           };
