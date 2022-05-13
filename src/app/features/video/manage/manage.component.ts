@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { BehaviorSubject, map, Subject } from 'rxjs';
+import { BehaviorSubject, combineLatest, map, Subject } from 'rxjs';
 import { IClip } from 'src/app/models/clip.model';
 import { ClipService } from 'src/app/services/clip.service';
 import { ModalService } from 'src/app/services/modal.service';
@@ -25,24 +25,42 @@ export class ManageComponent implements OnInit {
     private activatedRouter: ActivatedRoute,
     private clipService: ClipService,
     private modalService: ModalService
-  ) {
-    this.clipService
-      .getUserClips()
-      .pipe(
-        map(
-          (clipDocs) =>
-            clipDocs?.map((doc) => ({ ...doc.data(), docID: doc.id })) ?? null
-        )
-      )
-      .subscribe((clips) => this.clips$.next(clips ?? []));
-  }
+  ) {}
 
   ngOnInit(): void {
-    this.activatedRouter.queryParamMap.subscribe((prs) => {
-      const sortParam = prs.get('sort');
+    combineLatest([
+      this.activatedRouter.queryParamMap,
+      this.clipService
+        .getUserClips()
+        .pipe(
+          map(
+            (clipDocs) =>
+              clipDocs?.map((doc) => ({ ...doc.data(), docID: doc.id })) ?? null
+          )
+        )
+    ]).subscribe(([params, clips]) => {
+      const sortParam = params.get('sort');
       if (sortParam && (sortParam === 'asc' || sortParam === 'desc')) {
         this.videosSortOrder = sortParam;
       }
+
+      if (!clips) return;
+
+      clips.sort((clip1, clip2) => {
+        if (this.videosSortOrder === 'desc') {
+          return (
+            (clip1.timestamp as any)['seconds'] -
+            (clip2.timestamp as any)['seconds']
+          );
+        }
+
+        return (
+          (clip2.timestamp as any)['seconds'] -
+          (clip1.timestamp as any)['seconds']
+        );
+      });
+
+      this.clips$.next(clips ?? []);
     });
   }
 
