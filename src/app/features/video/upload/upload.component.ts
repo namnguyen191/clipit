@@ -4,11 +4,12 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import firebase from 'firebase/compat/app';
 import {
+  BehaviorSubject,
   combineLatest,
-  finalize,
-  last,
+  forkJoin,
   map,
   Observable,
+  of,
   Subject,
   switchMap
 } from 'rxjs';
@@ -16,6 +17,7 @@ import { IClip } from 'src/app/models/clip.model';
 import { IUserData } from 'src/app/models/user.model';
 import { AuthService } from 'src/app/services/auth.service';
 import { ClipService } from 'src/app/services/clip.service';
+import { FfmpegService } from 'src/app/services/ffmpeg.service';
 import { IAlert } from 'src/app/shared/alert/alert.component';
 
 @Component({
@@ -30,6 +32,11 @@ export class UploadComponent implements OnDestroy {
   isDragOver: boolean = false;
   file: File | null = null;
   user: IUserData | null = null;
+  screenshots$: Observable<string[]> = of([]);
+  isProcessingVideo$: Subject<boolean> = new Subject<boolean>();
+  selectedScreenshot$: BehaviorSubject<string | null> = new BehaviorSubject<
+    string | null
+  >(null);
   // alert
   alert$: Subject<IAlert> = new Subject<IAlert>();
   // form
@@ -39,21 +46,28 @@ export class UploadComponent implements OnDestroy {
     title: this.title
   });
   isProcessingRequest$: Subject<boolean> = new Subject<boolean>();
-  uploadPercentage$: Observable<number> | null = null;
+  uploadPercentage$: Subject<number> = new Subject<number>();
   // TODO: implement canDeactivate guard when the upload task is in progress
-  uploadTask: AngularFireUploadTask | null = null;
+  videoUploadTask: AngularFireUploadTask | null = null;
+  screenshotUploadTask: AngularFireUploadTask | null = null;
 
   constructor(
     private authService: AuthService,
     private clipService: ClipService,
-    private router: Router
+    private router: Router,
+    public ffmpegSevice: FfmpegService
   ) {
     this.authService.user$.subscribe((usr) => (this.user = usr));
+    this.ffmpegSevice.init();
   }
 
   ngOnDestroy(): void {
-    if (this.uploadTask) {
-      this.uploadTask.cancel();
+    if (this.videoUploadTask) {
+      this.videoUploadTask.cancel();
+    }
+
+    if (this.screenshotUploadTask) {
+      this.screenshotUploadTask.cancel();
     }
   }
 
@@ -71,7 +85,7 @@ export class UploadComponent implements OnDestroy {
     this.setFile(file);
   }
 
-  setFile(file: File | null): void {
+  async setFile(file: File | null): Promise<void> {
     if (!file) return;
 
     this.file = file;
@@ -80,11 +94,17 @@ export class UploadComponent implements OnDestroy {
       return;
     }
 
+    this.isProcessingVideo$.next(true);
+    const screenshots = await this.ffmpegSevice.getScreenShots(this.file);
+    this.screenshots$ = of(screenshots);
+    this.selectedScreenshot$.next(screenshots[0]);
+    this.isProcessingVideo$.next(true);
+
     this.title.setValue(this.file.name.replace(/\.[^/.]+$/, ''));
     this.formEnabled = true;
   }
 
-  uploadFile(): void {
+  async uploadFile(): Promise<void> {
     if (!this.file) return;
 
     this.uploadForm.disable();
@@ -96,30 +116,60 @@ export class UploadComponent implements OnDestroy {
     });
     this.isProcessingRequest$.next(true);
 
-    const [task, fileRef] = this.clipService.uploadClip(this.file);
-    this.uploadTask = task;
-
-    this.uploadPercentage$ = this.uploadTask.percentageChanges().pipe(
-      map((percent) => (percent ? percent / 100 : 0)),
-      finalize(() => (this.uploadPercentage$ = null))
+    const screenshotBlob = await this.ffmpegSevice.blobFromURL(
+      this.selectedScreenshot$.getValue()!
     );
 
-    this.uploadTask
-      .snapshotChanges()
+    const [videoTask, videoFileRef] = this.clipService.uploadClip(this.file);
+    this.videoUploadTask = videoTask;
+
+    const [screenshotTask, screenshotFileRef] =
+      this.clipService.uploadScreenshot(screenshotBlob);
+    this.screenshotUploadTask = screenshotTask;
+
+    combineLatest([
+      this.videoUploadTask.percentageChanges(),
+      this.screenshotUploadTask.percentageChanges()
+    ])
       .pipe(
-        last(),
+        map(([videoPercent, screenshotPercent]) => {
+          const result = ((videoPercent || 0) + (screenshotPercent || 0)) / 200;
+          return result;
+        })
+      )
+      .subscribe((val) => this.uploadPercentage$.next(val));
+
+    forkJoin([
+      this.videoUploadTask.snapshotChanges(),
+      this.screenshotUploadTask.snapshotChanges()
+    ])
+      .pipe(
         switchMap(() =>
-          combineLatest([fileRef.getMetadata(), fileRef.getDownloadURL()])
+          forkJoin([
+            videoFileRef.getDownloadURL(),
+            videoFileRef.getMetadata(),
+            screenshotFileRef.getDownloadURL(),
+            screenshotFileRef.getMetadata()
+          ])
         )
       )
       .subscribe({
-        next: async ([fileMetaData, downloadUrl]) => {
+        next: async ([
+          videoDownloadURL,
+          videoMetadata,
+          screenshotDownloadURL,
+          screenshotMetadata
+        ]) => {
+          this.isProcessingRequest$.next(false);
+
           const clip: IClip = {
             uid: this.user?.uuid ?? 'unknow',
             displayName: this.user?.name ?? 'unknow user displayName',
             title: this.title.value,
-            fileName: fileMetaData.name,
-            url: downloadUrl,
+            fileName: videoMetadata['name'],
+            url: videoDownloadURL,
+            screenshotURL: screenshotDownloadURL,
+            screenshotFileName: screenshotMetadata['name'],
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
           };
 
@@ -135,6 +185,8 @@ export class UploadComponent implements OnDestroy {
           });
         },
         error: (err) => {
+          this.isProcessingRequest$.next(false);
+
           this.uploadForm.enable();
           this.alert$.next({
             color: 'red',

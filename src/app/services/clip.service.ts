@@ -11,9 +11,10 @@ import {
   AngularFireStorageReference,
   AngularFireUploadTask
 } from '@angular/fire/compat/storage';
-import { map, Observable, of, switchMap } from 'rxjs';
+import { forkJoin, map, Observable, of, switchMap } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import { IClip } from '../models/clip.model';
+import { FfmpegService } from './ffmpeg.service';
 
 @Injectable({
   providedIn: 'root'
@@ -26,7 +27,8 @@ export class ClipService {
   constructor(
     private angularFirestore: AngularFirestore,
     private angularFireAuth: AngularFireAuth,
-    private angularFireStorage: AngularFireStorage
+    private angularFireStorage: AngularFireStorage,
+    private ffmpegService: FfmpegService
   ) {
     this._clipsCollection = this.angularFirestore.collection(
       this.CLIPS_COLLECTION_ID
@@ -44,6 +46,18 @@ export class ClipService {
     return [
       this.angularFireStorage.upload(clipPath, file),
       this.angularFireStorage.ref(clipPath)
+    ];
+  }
+
+  uploadScreenshot(
+    screenshotBlob: Blob
+  ): [AngularFireUploadTask, AngularFireStorageReference] {
+    const screenshotFileName = uuid();
+    const screenshotPath = `screenshots/${screenshotFileName}.png`;
+
+    return [
+      this.angularFireStorage.upload(screenshotPath, screenshotBlob),
+      this.angularFireStorage.ref(screenshotPath)
     ];
   }
 
@@ -65,11 +79,16 @@ export class ClipService {
     );
   }
 
-  deleteClip(clip: IClip): Observable<void> {
+  deleteClip(clip: IClip): Observable<string | undefined> {
     const clipRef = this.angularFireStorage.ref(`clips/${clip.fileName}`);
+    const screenshotRef = this.angularFireStorage.ref(
+      `screenshots/${clip.screenshotFileName}`
+    );
 
-    return clipRef
-      .delete()
-      .pipe(switchMap(() => this._clipsCollection.doc(clip.docID).delete()));
+    return forkJoin([
+      clipRef.delete(),
+      screenshotRef.delete(),
+      this._clipsCollection.doc(clip.docID).delete()
+    ]).pipe(map(() => clip.docID));
   }
 }
