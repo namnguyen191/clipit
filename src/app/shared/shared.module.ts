@@ -7,6 +7,7 @@ import { EventBlockerDirective } from './directives/event-blocker.directive';
 import { InputComponent } from './input/input.component';
 import { LoadingSpinnerComponent } from './loading-spinner/loading-spinner.component';
 import { ModalComponent } from './modal/modal.component';
+import { FpTimeStampPipe } from './pipes/fp-time-stamp.pipe';
 import { TabComponent } from './tab/tab.component';
 import { TabsContainerComponent } from './tabs-container/tabs-container.component';
 
@@ -18,7 +19,8 @@ import { TabsContainerComponent } from './tabs-container/tabs-container.componen
     InputComponent,
     AlertComponent,
     LoadingSpinnerComponent,
-    EventBlockerDirective
+    EventBlockerDirective,
+    FpTimeStampPipe
   ],
   imports: [CommonModule, ReactiveFormsModule, NgxMaskModule.forRoot()],
   exports: [
@@ -28,7 +30,8 @@ import { TabsContainerComponent } from './tabs-container/tabs-container.componen
     InputComponent,
     AlertComponent,
     LoadingSpinnerComponent,
-    EventBlockerDirective
+    EventBlockerDirective,
+    FpTimeStampPipe
   ]
 })
 export class SharedModule {}

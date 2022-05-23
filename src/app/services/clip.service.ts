@@ -65,7 +65,7 @@ export class ClipService {
     return this._clipsCollection.doc(updateClip.docID).update(updateClip);
   }
 
-  getUserClips(): Observable<QueryDocumentSnapshot<IClip>[] | null> {
+  getUserClips(): Observable<IClip[]> {
     return this.angularFireAuth.user.pipe(
       switchMap((usr) => {
         if (!usr) {
@@ -75,7 +75,11 @@ export class ClipService {
 
         return query.get();
       }),
-      map((snapshot) => snapshot?.docs ?? null)
+      map((snapshot) => {
+        if (!snapshot?.docs) return [];
+
+        return snapshot.docs.map((doc) => ({ ...doc.data(), docID: doc.id }));
+      })
     );
   }
 
@@ -90,5 +94,33 @@ export class ClipService {
       screenshotRef.delete(),
       this._clipsCollection.doc(clip.docID).delete()
     ]).pipe(map(() => clip.docID));
+  }
+
+  getClips(params: {
+    limit?: number;
+    lastDocId?: string;
+  }): Observable<IClip[]> {
+    const { limit = 6, lastDocId } = params;
+
+    const query = this._clipsCollection.ref
+      .orderBy('timestamp', 'desc')
+      .limit(limit);
+    const lastDocQuery: Observable<QueryDocumentSnapshot<IClip | undefined>> =
+      this._clipsCollection.doc(lastDocId).get();
+
+    return lastDocQuery.pipe(
+      switchMap((lastDoc) => {
+        if (lastDoc.exists) {
+          return query.startAfter(lastDoc).get();
+        }
+
+        return query.get();
+      }),
+      map((clipDocs) => {
+        if (!clipDocs?.docs) return [];
+
+        return clipDocs.docs.map((doc) => ({ ...doc.data(), docID: doc.id }));
+      })
+    );
   }
 }
