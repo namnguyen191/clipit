@@ -4,7 +4,8 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build --output-path dist --base-href /clipit/",
+    "build": "ng build",
+    "build-gh-page": "ng build --output-path dist --base-href /clipit/",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint"
