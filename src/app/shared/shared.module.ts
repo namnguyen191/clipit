@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { NgxMaskModule } from 'ngx-mask';
 import { AlertComponent } from './alert/alert.component';
+import { ClipsListComponent } from './clips-list/clips-list.component';
 import { EventBlockerDirective } from './directives/event-blocker.directive';
 import { InputComponent } from './input/input.component';
 import { LoadingSpinnerComponent } from './loading-spinner/loading-spinner.component';
@@ -20,9 +22,15 @@ import { TabsContainerComponent } from './tabs-container/tabs-container.componen
     AlertComponent,
     LoadingSpinnerComponent,
     EventBlockerDirective,
-    FpTimeStampPipe
+    FpTimeStampPipe,
+    ClipsListComponent
   ],
-  imports: [CommonModule, ReactiveFormsModule, NgxMaskModule.forRoot()],
+  imports: [
+    CommonModule,
+    RouterModule,
+    ReactiveFormsModule,
+    NgxMaskModule.forRoot()
+  ],
   exports: [
     ModalComponent,
     TabsContainerComponent,
@@ -31,7 +39,8 @@ import { TabsContainerComponent } from './tabs-container/tabs-container.componen
     AlertComponent,
     LoadingSpinnerComponent,
     EventBlockerDirective,
-    FpTimeStampPipe
+    FpTimeStampPipe,
+    ClipsListComponent
   ]
 })
 export class SharedModule {}

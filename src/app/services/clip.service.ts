@@ -11,15 +11,20 @@ import {
   AngularFireStorageReference,
   AngularFireUploadTask
 } from '@angular/fire/compat/storage';
+import {
+  ActivatedRouteSnapshot,
+  Resolve,
+  Router,
+  RouterStateSnapshot
+} from '@angular/router';
 import { forkJoin, map, Observable, of, switchMap } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import { IClip } from '../models/clip.model';
-import { FfmpegService } from './ffmpeg.service';
 
 @Injectable({
   providedIn: 'root'
 })
-export class ClipService {
+export class ClipService implements Resolve<IClip | null> {
   private readonly CLIPS_COLLECTION_ID = 'clips';
 
   private _clipsCollection: AngularFirestoreCollection<IClip>;
@@ -28,11 +33,31 @@ export class ClipService {
     private angularFirestore: AngularFirestore,
     private angularFireAuth: AngularFireAuth,
     private angularFireStorage: AngularFireStorage,
-    private ffmpegService: FfmpegService
+    private router: Router
   ) {
     this._clipsCollection = this.angularFirestore.collection(
       this.CLIPS_COLLECTION_ID
     );
+  }
+
+  resolve(
+    route: ActivatedRouteSnapshot,
+    _state: RouterStateSnapshot
+  ): IClip | Observable<IClip | null> | Promise<IClip | null> | null {
+    return this._clipsCollection
+      .doc(route.params['id'])
+      .get()
+      .pipe(
+        map((clipSnapshot) => {
+          const data = clipSnapshot.data();
+          if (!data) {
+            this.router.navigate(['']);
+            return null;
+          }
+
+          return data;
+        })
+      );
   }
 
   createClip(data: IClip): Promise<DocumentReference<IClip>> {

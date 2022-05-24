@@ -14,8 +14,8 @@ import {
   takeUntil,
   tap
 } from 'rxjs';
-import { IClip } from '../models/clip.model';
-import { ClipService } from '../services/clip.service';
+import { IClip } from '../../models/clip.model';
+import { ClipService } from '../../services/clip.service';
 
 @Component({
   selector: 'app-clips-list',

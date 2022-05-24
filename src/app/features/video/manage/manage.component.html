@@ -31,7 +31,7 @@
       class="mt-6 rounded-tl-2xl rounded-br-2xl shadow-xl bg-secondary flex flex-col justify-start"
     >
       <!-- Image -->
-      <a href="#">
+      <a [routerLink]="['/', 'clips', clip.docID]">
         <img
           class="card-img-top rounded-tl-2xl w-full"
           [src]="clip.screenshotURL"
@@ -49,6 +49,7 @@
         <a
           href="#"
           class="bg-gray-400 text-white px-2 py-1 ml-2 text-sm rounded"
+          (click)="copyToClipboard($event, clip.docID)"
         >
           Copy Link
         </a>

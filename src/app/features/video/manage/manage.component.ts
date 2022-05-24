@@ -96,4 +96,18 @@ export class ManageComponent implements OnInit {
     oldClips[updatedIndex] = { ...oldClips[updatedIndex], ...updatedClip };
     this.clips$.next(oldClips);
   }
+
+  async copyToClipboard(event: Event, clipId?: string) {
+    event.preventDefault();
+
+    if (!clipId) {
+      return;
+    }
+
+    const url = `${location.origin}/clips/${clipId}`;
+
+    await navigator.clipboard.writeText(url);
+
+    alert('link coppied!');
+  }
 }
