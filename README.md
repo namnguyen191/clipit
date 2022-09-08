@@ -1,11 +1,9 @@
-<details>
-<summary>Meta data</summary>
-  
-** Meta data start **
-<description>A simple traveling website built using advanced CSS</description>
-<imgUrl>someurl</imgUrl>
-<stacks>html,css,bootstrap,sass</stacks>
-<siteUrl>https://namnguyen191.github.io/Natours/</siteUrl>
-<primaryColor>#28b485</primaryColor>
-** Meta data end **
-</details>
+***MetaData***
+```
+{
+  "imgUrl": "https://github.com/namnguyen191/clipit/blob/master/src/assets/img/1.jpg?raw=true",
+  "stacks": ["html", "css", "sass", "bootstrap"],
+  "primaryColor": "#280a6e"
+}
+```
+***MetaData***
