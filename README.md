@@ -2,9 +2,9 @@
 ```
 {
   "title": "Clipit! Video Sharing",
-  "imgUrl": "https://github.com/namnguyen191/clipit/blob/master/src/assets/img/1.jpg?raw=true",
-  "stacks": ["angular", "wasm", "rust", "github-action"],
-  "primaryColor": "#280a6e"
+  "imgUrl": "https://raw.githubusercontent.com/namnguyen191/OnlineCompiler/master/public/online-compiler-bg.webp",
+  "stacks": ["react", "typescript", "webpack", "iframe"],
+  "primaryColor": "#0000b3"
 }
 ```
 ***MetaData***
